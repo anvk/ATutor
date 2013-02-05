@@ -43,8 +43,6 @@ function links_authenticate($owner_type, $owner_id) {
 
 /* return true if user is able to manage group or course links */
 function manage_links() {
-	global $db;
-
 	if (authenticate(AT_PRIV_GROUPS, true) && authenticate(AT_PRIV_LINKS, true)) { //course and group links
 		return LINK_CAT_AUTH_ALL;
 	} else if (authenticate(AT_PRIV_GROUPS, true)) { //all group links
@@ -54,20 +52,14 @@ function manage_links() {
 	} else if (!empty($_SESSION['groups'])) { //particular group links
 		//find a group that uses links
 		foreach ($_SESSION['groups'] as $group_id) {
-			$sql = "SELECT modules FROM ".TABLE_PREFIX."groups WHERE group_id=$group_id";
-			$result = mysql_query($sql, $db);
-
-			$row = mysql_fetch_assoc($result);
+			$row = queryDB('SELECT modules FROM %sgroups WHERE group_id=%d', array(TABLE_PREFIX, $group_id), true);
 			$mods = explode('|', $row['modules']);
-
 			if (in_array("_standard/links", $mods)) {
 				return LINK_CAT_AUTH_GROUP;
 			}
 		}
-
-		return FALSE;
+		return false;
 	}
-
 	return LINK_CAT_AUTH_NONE;
 }
 
@@ -209,5 +201,4 @@ function get_cat_info($cat_id) {
 	$row = queryDB('SELECT * FROM %slinks_categories WHERE cat_id=%d', array(TABLE_PREFIX, $cat_id));
 	return $row;
 }
-
 ?>
