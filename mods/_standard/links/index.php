@@ -24,15 +24,12 @@ if (!manage_links()) {
 if (isset($_GET['view'])) {
 	$_GET['view'] = intval($_GET['view']);
 	//add to the num hits
-	$sql = "SELECT Url, hits FROM ".TABLE_PREFIX."links WHERE link_id=$_GET[view]";
-	$results = mysql_query($sql,$db);
+    $row = queryDB('SELECT Url, hits FROM %slinks WHERE link_id=%d', array(TABLE_PREFIX, $_GET['view']), true);
 
-	if ($row = mysql_fetch_assoc($results)) { 
+    if (count($row) > 0) {
 		if (!authenticate(AT_PRIV_LINKS, AT_PRIV_RETURN)) {
-
 			$row['hits']++;
-			$sql = "UPDATE ".TABLE_PREFIX."links SET hits=$row[hits] WHERE link_id=$_GET[view]";
-			mysql_query($sql,$db);
+			queryDB('UPDATE %slinks SET hits=%s WHERE link_id=%d', array(TABLE_PREFIX, $row['hits'], $_GET['view']));
 		}
 		
 		//http://www.atutor.ca/atutor/mantis/view.php?id=3853
@@ -44,7 +41,7 @@ if (isset($_GET['view'])) {
 		//redirect
 		header('Location: ' . $row['Url']);
 		exit;
-	}
+    }
 }
 
 require (AT_INCLUDE_PATH.'header.inc.php');
@@ -101,12 +98,11 @@ if ($_GET['cat_parent_id']) {
 $tmp_groups = implode(',', $_SESSION['groups']);
 
 if (!empty($tmp_groups)) {
-	$sql = "SELECT * FROM ".TABLE_PREFIX."links L INNER JOIN ".TABLE_PREFIX."links_categories C USING (cat_id) WHERE ((owner_id=$_SESSION[course_id] AND owner_type=".LINK_CAT_COURSE.") OR (owner_id IN ($tmp_groups) AND owner_type=".LINK_CAT_GROUP.")) AND L.Approved=1 AND $search AND $cat_sql ORDER BY $col $order";
+	$result = queryDB('SELECT * FROM %slinks L INNER JOIN %slinks_categories C USING (cat_id) WHERE ((owner_id=%d AND owner_type=%s) OR (owner_id IN (%s) AND owner_type=%s)) AND L.Approved=1 AND %s AND %s ORDER BY %s %s', array(TABLE_PREFIX, TABLE_PREFIX, $_SESSION['course_id'], LINK_CAT_COURSE, $tmp_groups, LINK_CAT_GROUP, $search, $cat_sql, $col, $order));
 } else {
-	$sql = "SELECT * FROM ".TABLE_PREFIX."links L INNER JOIN ".TABLE_PREFIX."links_categories C USING (cat_id) WHERE (owner_id=$_SESSION[course_id] AND owner_type=".LINK_CAT_COURSE.") AND L.Approved=1 AND $search AND $cat_sql ORDER BY $col $order";
+	$result = queryDB('SELECT * FROM %slinks L INNER JOIN %slinks_categories C USING (cat_id) WHERE (owner_id=%d AND owner_type=%s) AND L.Approved=1 AND %s AND %s ORDER BY %s %s', array(TABLE_PREFIX, TABLE_PREFIX, $_SESSION['course_id'], LINK_CAT_COURSE, $search, $cat_sql, $col, $order));
 }
-$result = mysql_query($sql, $db);
-$num_results = mysql_num_rows($result);
+$num_results = count($result);
 
 ?>
 <?php if ($num_results > 0 || isset($_GET['filter'])): ?>
@@ -173,9 +169,10 @@ $num_results = mysql_num_rows($result);
 </tr>
 </thead>
 <tbody>
-	<?php if ($row = mysql_fetch_assoc($result)) : ?>
 	<?php
-	do {
+	if (!empty($result)) {
+	   foreach($result as $i=>$value) {
+	   $row = $result[$i];
 		?>
 		<tr onmousedown="document.form['m<?php echo $row['link_id']; ?>'].checked = true;">
 			<td><a href="<?php echo url_rewrite('mods/_standard/links/index.php?view='.$row['link_id']); ?>" target="_new" title="<?php echo AT_print($row['LinkName'], 'links.LinkName'); ?>"><?php echo AT_print($row['LinkName'], 'links.LinkName'); ?></a></td>
@@ -187,13 +184,12 @@ $num_results = mysql_num_rows($result);
 			?></td>
 			<td><?php echo AT_print($row['Description'], 'links.Description'); ?></td>
 		</tr>
-	<?php 
-		} while ($row = mysql_fetch_assoc($result)); ?>
-	<?php else: ?>
-		<tr>
-			<td colspan="3"><?php echo _AT('none_found'); ?></td>
-		</tr>
-	<?php endif; ?>
+		<?php 
+        }
+    } else {
+		?>
+		<tr><td colspan="3"><?php echo _AT('none_found'); ?></td></tr>
+<?php } ?>
 </tbody>
 </table>
 
