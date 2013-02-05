@@ -18,7 +18,6 @@
  * returns true if they can
  */
 function links_authenticate($owner_type, $owner_id) {
-	global $db;
 
 	if (empty($owner_type) || empty($owner_id)) {
 		return false;
@@ -32,15 +31,13 @@ function links_authenticate($owner_type, $owner_id) {
 
 	if ($owner_type == LINK_CAT_GROUP) {
 		//check if member of group
-		if ($_SESSION['valid_user'] && isset($_SESSION['groups'])) {			
-			$sql="SELECT * FROM ".TABLE_PREFIX."groups_members WHERE group_id=".$owner_id." AND member_id=".$_SESSION['member_id'];
-			$result = mysql_query($sql, $db);
-			if ($row = mysql_fetch_assoc($result)) {
+		if ($_SESSION['valid_user'] && isset($_SESSION['groups'])) {
+			$row = queryDB('SELECT * FROM %sgroups_members WHERE group_id=%d AND member_id=%d', array(TABLE_PREFIX, $owner_id, $_SESSION['member_id']), true);
+			if (!empty($row)) {
 				return true;
 			}
-		} 
-	} 
-
+		}
+	}
 	return false;
 }
 
@@ -146,17 +143,12 @@ function get_link_categories($manage=false, $list=false) {
 }
 
 function select_link_categories($categories, $cat_id, $current_cat_id, $exclude, $depth=0, $owner=FALSE) {
-	global $db; 
-
 	if ($cat_id == 0 && is_array($categories[0])) {
 		foreach($categories[0] as $child_cat_id) {
 			select_link_categories($categories, $child_cat_id, $current_cat_id, $depth, 0, $owner);
 		}
 	} else {
-		$sql = "SELECT name, owner_type, owner_id FROM ".TABLE_PREFIX."links_categories WHERE cat_id=$cat_id";
-		$result = mysql_query($sql, $db);
-		$row = mysql_fetch_assoc($result);
-
+		$row = queryDB('SELECT name, owner_type, owner_id FROM %slinks_categories WHERE cat_id=%d', array(TABLE_PREFIX, $cat_id), true);
 
 		if ($exclude && ($cat_id == $current_cat_id)) {
 			return;
@@ -195,9 +187,10 @@ function get_child_categories ($cat_id, $categories) {
     }
     
     $category = $categories[$cat_id];
+    $children = $category['children'];
     $children_string = "";
-    if (is_array($categories[$cat_id]['children'])){
-        foreach ($categories[$cat_id]['children'] as $child) {
+    if (is_array($children)){
+        foreach ($children as $child) {
             $children_string = $child.",";
         }
     }
@@ -205,25 +198,15 @@ function get_child_categories ($cat_id, $categories) {
 }
 
 function get_group_name($owner_id) {
-	global $db;
-
 	if (!$owner_id) {
 		return false;
 	}
-
-	$sql = "SELECT title FROM ".TABLE_PREFIX."groups WHERE group_id=".$owner_id;
-	$result = mysql_query($sql, $db);
-	$row = mysql_fetch_assoc($result);
+	$row = queryDB("SELECT title FROM %sgroups WHERE group_id=%d", array(TABLE_PREFIX, $owner_id), true);
 	return $row['title'];
 }
 
 function get_cat_info($cat_id) {
-	global $db;
-
-	$sql = "SELECT * FROM ".TABLE_PREFIX."links_categories WHERE cat_id=".$cat_id;
-	$result = mysql_query($sql, $db);
-	$row = mysql_fetch_assoc($result);
-
+	$row = queryDB('SELECT * FROM %slinks_categories WHERE cat_id=%d', array(TABLE_PREFIX, $cat_id));
 	return $row;
 }
 

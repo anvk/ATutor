@@ -26,7 +26,7 @@ if (isset($_GET['view'])) {
 	//add to the num hits
     $row = queryDB('SELECT Url, hits FROM %slinks WHERE link_id=%d', array(TABLE_PREFIX, $_GET['view']), true);
 
-    if (count($row) > 0) {
+    if (!empty($row)) {
 		if (!authenticate(AT_PRIV_LINKS, AT_PRIV_RETURN)) {
 			$row['hits']++;
 			queryDB('UPDATE %slinks SET hits=%s WHERE link_id=%d', array(TABLE_PREFIX, $row['hits'], $_GET['view']));
