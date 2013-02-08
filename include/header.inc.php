@@ -100,6 +100,8 @@ if($_config['session_timeout']){
 }else{
 	$_at_timeout = '1200';
 }
+$_at_timeout = 10;
+
 $custom_head .= '
 	<link rel="stylesheet" href="'.AT_print($_base_path, 'url.base').'jscripts/lib/jquery-ui.css" />
 	<script src="'.AT_print($_base_path, 'url.base').'jscripts/infusion/lib/jquery/core/js/jquery.js" type="text/javascript"></script>
@@ -113,7 +115,7 @@ $custom_head .= '
 		    redirUrl     : "'.AT_print($_base_path, 'url.base').'logout.php",
 		    logoutUrl    : "'.AT_print($_base_path, 'url.base').'logout.php",
 		    warnAfter: '.($_at_timeout*1000).', // maxlifetime converted to milliseconds
-		    redirAfter: '.(($_at_timeout*1000)+300000).', // allow 5 more minutes to respond, in milliseconds
+		    redirAfter: '.(($_at_timeout*1000)+100).', // allow 5 more minutes to respond, in milliseconds
 		    title        : "'._AT('session_timeout_title').'",
 		    button_1     : "'._AT('session_timeout_logout_now').'",
 		    button_2	 : "'._AT('session_timeout_stay_connected').'"
